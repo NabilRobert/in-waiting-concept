@@ -358,8 +358,8 @@ async function runEvents(events, id) {
     if (e.type === "played") {
       setPose(poseFor(e.card));
       aura(cardColour(e.card));
+      sfx("cardPlay");
       if (e.card.name === "Heel stamp") playShoe({ dip: false });
-      else sfx("cardPlay");
       if (e.dmg) sfx("charm");
       if (e.card.poise) sfx("poise");
       if (e.dmg) float(`Charm ${e.dmg}`);

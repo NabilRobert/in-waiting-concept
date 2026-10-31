@@ -260,9 +260,11 @@ const arpeggio = (notes, gap, length, volume) => notes.forEach((f, i) => tone(f,
 const SOUNDS = {
   click: () => { tone(520, 0.05, 0.1, "triangle"); swish(0.03, 0.05, 2600, 1800); },
   hover: () => tone(1250, 0.025, 0.03),
-  cardHover: () => { swish(0.07, 0.06, 2400, 4200); tone(880, 0.04, 0.035, "triangle"); },
+  // A paper swipe, like a card sliding out of the hand.
+  cardHover: () => { swish(0.1, 0.17, 1600, 5200); swish(0.07, 0.09, 5200, 3000, 0.07); },
   swoosh: () => { swish(0.13, 0.2, 450, 2800); swish(0.2, 0.17, 2800, 500, 0.11); },
-  cardPlay: () => { swish(0.16, 0.2, 3200, 700); tone(392, 0.09, 0.09, "triangle", 0.05); },
+  // The same paper sound as the hover, but longer and firmer: a card pulled out of the stack.
+  cardPlay: () => { swish(0.09, 0.26, 2200, 6500); swish(0.15, 0.17, 6500, 2400, 0.08); },
   charm: () => tone(660, 0.13, 0.08, "sine", 0.06, 990),
   poise: () => { tone(1760, 0.2, 0.05); tone(2350, 0.26, 0.035); },
   block: () => { tone(1320, 0.28, 0.1, "triangle"); tone(1980, 0.34, 0.06); swish(0.08, 0.1, 3000, 1500); },
@@ -277,7 +279,7 @@ const SOUNDS = {
   fail: () => arpeggio([392, 330, 262], 0.15, 0.38, 0.11),
   banner: () => swish(0.28, 0.14, 700, 2600),
   popupClose: () => swish(0.16, 0.1, 2600, 800),
-  toggleOn: () => tone(740, 0.08, 0.09, "triangle", 0, 988),
+  toggleOn: () => SOUNDS.cardPlay(),
   toggleOff: () => tone(740, 0.08, 0.08, "triangle", 0, 494),
   // Luna's little "mrrp" each time her bubble moves on.
   coach: () => { tone(620, 0.09, 0.15, "triangle", 0, 1040); tone(1040, 0.14, 0.13, "triangle", 0.08, 720); },
@@ -301,7 +303,7 @@ document.addEventListener("pointerover", (event) => {
   const target = event.target.closest("button, summary");
   if (target === lastHover) return;
   lastHover = target;
-  if (target && !target.matches(".card, :disabled")) sfx("hover");
+  if (target && !target.matches(".card, :disabled")) sfx(target.matches(".tile") ? "cardHover" : "hover");
 });
 
 function note(freq, start, length, volume) {
