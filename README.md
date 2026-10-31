@@ -30,6 +30,7 @@ These are other people's work, used here for reference only.
 | Prince portrait | `webapp/assets/reference/prince.png` | [Character art from *The Villainess Is Adored by the Prince of the Neighbor Kingdom*, Crunchyroll](https://www.crunchyroll.com/news/latest/2025/10/29/the-villainess-is-adored-by-the-prince-of-the-neighbor-kingdom-anime-character-art) |
 | Rival portrait | `webapp/assets/reference/rival.png` | [Empress OC, Pinterest](https://www.pinterest.com/pin/empress-oc--18295942228575367/) |
 | Ballroom background | `webapp/assets/reference/ballroom.jpg` | [Pinterest](https://id.pinterest.com/pin/836191855847392085/) |
+| Tutorial guide portrait (Luna, *Sailor Moon*) | `webapp/assets/reference/guide.png` | [Univision](https://www.univision.com/entretenimiento/cine-y-series/las-9-mascotas-mas-adorables-y-graciosas-que-puedes-encontrar-en-el-anime) |
 | Dance key art | `webapp/assets/reference/keyart.jpg` | [*Jack Jeanne* review, Qualbert](https://www.qualbert.com/reviews/jack-jeanne-review/) |
 | Prince's attack key art | `webapp/assets/reference/keyart-prince.jpg` | [*Ballroom e Youkoso* wallpapers, WallpaperCave](https://wallpapercave.com/ballroom-e-youkoso-wallpapers) |
 | Dance silhouettes, poses 1 to 7 | `webapp/assets/reference/poses/` | [Dance duet vectors](https://www.magnific.com/vectors/dance-duet/2), [bourrée dance silhouettes](https://www.magnific.com/vectors/bourree-dance-silhouette) and [dance duo silhouettes](https://www.magnific.com/vectors/dance-duo-silhouette), Magnific |
@@ -37,4 +38,4 @@ These are other people's work, used here for reference only.
 | Shoe stomp sound | `webapp/assets/reference/encore-tap.wav` | Clip from the recording "Tap dance in flamenco shoes - just having some fun!" (original source to be confirmed) |
 | Music | `webapp/assets/bailon-de-palmas.mp3`, `webapp/assets/bailon-de-tres-accordion.mp3` | Made with [Suno](https://suno.com) |
 
-The card emblems, the prince's attack sound and the clap sound were made for this concept.
+The card emblems, the sound effects, the prince's attack sound and the clap sound were made for this concept.

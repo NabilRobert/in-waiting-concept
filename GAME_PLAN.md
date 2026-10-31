@@ -329,6 +329,12 @@ The portraits and ballroom in `webapp/assets/reference` are other artists' work,
 
 **Music plan:** each style's theme needs 3 versions that build through the round: the base version for waltz 1, a bit more intense for waltz 2, and the climax for waltz 3. That applies to Flamenco and Waltz first, then Tango and Minuet when they have themes.
 
+**Future task:** remake the songs in 3/4 time, so the music moves like a waltz.
+
+**Tutorial:** one round of 3 waltzes that teaches one idea at a time. Luna, a friendly talking cat, guides the player from a speech bubble, darkening the screen around each part she explains and waiting for the player to try it. She appears only in the tutorial, and her portrait is another artist's work, used as a placeholder. Waltz 1 covers Composure, the gold mark, Music, Steps, his next move, Poise, End Measure and the piles. Waltz 2 covers Hearts, stances, answering, phrases, Flourishes and Rhythm cards. Waltz 3 covers Fluster, Secrets, tags, the rival's weakness and Closers. The text is in `webapp/tutorial.js` for the writer to replace. The tutorial's Hearts are only practice, so it can't be lost.
+
+**Sound effects:** every button, card hover, card play, silhouette pose change, block, Flourish and result has a sound. All are placeholders generated in `webapp/audio.js`, and the Sound button mutes them with the music.
+
 **Later idea:** add a setting to turn key art moments on or off.
 
 **Later idea:** add Tango and Minuet songs, and lock the dancers to each song's real beat.

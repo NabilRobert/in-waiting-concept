@@ -540,3 +540,27 @@ h2 { font-size: 28px; margin: 28px 0 12px; }
 @media (max-width: 900px) {
   .card .beat-tag { position: static; align-self: flex-start; margin-bottom: 2px; }
 }
+
+/* The tutorial coach */
+.intro-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.plain-button { color: var(--cream); background: rgba(255, 255, 255, .08); border: 2px solid rgba(255, 255, 255, .35); border-radius: 12px; padding: 10px 16px; font-weight: 700; }
+.plain-button:hover { background: rgba(255, 255, 255, .18); }
+.coach { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); z-index: 15; width: min(780px, 92vw); display: flex; gap: 20px; align-items: flex-start; }
+.coach[hidden] { display: none; }
+.coach-name { display: block; font-family: "Alegreya", serif; font-size: 20px; line-height: 1.1; color: var(--plum); }
+.coach-portrait { flex: none; width: 112px; height: 112px; object-fit: cover; object-position: 50% 45%; margin-top: 2px; border: 3px solid var(--gold); outline: 3px solid var(--edge); border-radius: 50%; box-shadow: 0 10px 28px rgba(0, 0, 0, .5); }
+.coach-bubble { position: relative; flex: 1; min-width: 0; padding: 12px 18px; background: #fff8ea; border: 3px solid var(--gold); outline: 3px solid var(--edge); border-radius: 14px; box-shadow: 0 10px 28px rgba(0, 0, 0, .5); animation: speechIn .2s ease-out; }
+.coach-bubble::before { content: ""; position: absolute; left: -15px; top: 34px; width: 22px; height: 22px; background: #fff8ea; border-left: 3px solid var(--gold); border-bottom: 3px solid var(--gold); transform: rotate(45deg); }
+.coach span { font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--plum); }
+.coach p { margin: 2px 0 8px; font-size: clamp(16px, 1.2vw, 19px); font-weight: 600; }
+.coach .end-button { padding: 5px 20px; font-size: 17px; border-bottom-width: 4px; }
+.coach-spot { position: fixed; z-index: 13; pointer-events: none; opacity: 0; box-shadow: 0 0 0 200vmax rgba(10, 3, 8, .72); transition: opacity .2s; }
+.coach-spot.on { opacity: 1; }
+.coach-target { outline: 4px solid #ffd54a !important; outline-offset: 3px; box-shadow: 0 0 26px 6px rgba(255, 213, 74, .85) !important; animation: coachPulse 1.1s ease-in-out infinite; z-index: 11; }
+#hand .card.coach-target { transform: translateY(-34px); }
+@keyframes coachPulse { 50% { box-shadow: 0 0 12px 2px rgba(255, 213, 74, .5); } }
+.in-tutorial .speech { top: 262px; }
+.in-tutorial .her-speech { top: 300px; }
+.in-tutorial .intent { top: 200px; }
+@media (max-width: 900px) { .coach { position: fixed; top: 8px; gap: 12px; } .coach-portrait { width: 64px; height: 64px; } .coach-bubble::before { top: 16px; } .in-tutorial .speech, .in-tutorial .intent { top: auto; } }
+@media (prefers-reduced-motion: reduce) { .coach-target { animation: none; } }

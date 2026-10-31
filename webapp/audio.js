@@ -10,6 +10,7 @@ export const BAR_MS = 985;   // one 1-2-3 bar, used to time the dancers
 const FULL = 0.62, QUIET = 0.26, FADE = 0.4, CROSSFADE = 1.2;
 const SHOE_GAIN = 1.6, DIP = 0.18, DIP_HOLD = 0.8, DIP_RETURN = 0.55;
 let shoePlays = 0, princeHits = 0, clapPlays = 0;
+const sfxPlayed = {};
 const SILENT_TEST = new URLSearchParams(location.search).has("silent");   // runs all audio without being heard
 let ctx = null, master = null, songBus = null, meter = null, shoeBuffer = null, current = null, wanted = false, muted = false, level = FULL, request = 0;
 const buffers = {}, offsets = {};
@@ -223,6 +224,86 @@ export function toggleMute() {
   return muted;
 }
 
+// Interface sounds, all made in code so they match. Each one is short and sits under the music.
+function tone(freq, length, volume, type = "sine", delay = 0, endFreq = 0) {
+  const start = ctx.currentTime + delay, osc = ctx.createOscillator(), gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, start);
+  if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, start + length);
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(volume, start + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+  osc.connect(gain).connect(master);
+  osc.start(start);
+  osc.stop(start + length + 0.02);
+}
+
+function swish(length, volume, from, to, delay = 0) {
+  const start = ctx.currentTime + delay;
+  const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * length), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const source = ctx.createBufferSource(), band = ctx.createBiquadFilter(), gain = ctx.createGain();
+  source.buffer = buffer;
+  band.type = "bandpass";
+  band.Q.value = 1;
+  band.frequency.setValueAtTime(from, start);
+  band.frequency.exponentialRampToValueAtTime(to, start + length);
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(volume, start + length * 0.25);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+  source.connect(band).connect(gain).connect(master);
+  source.start(start);
+}
+
+const arpeggio = (notes, gap, length, volume) => notes.forEach((f, i) => tone(f, length, volume, "triangle", i * gap));
+const SOUNDS = {
+  click: () => { tone(520, 0.05, 0.1, "triangle"); swish(0.03, 0.05, 2600, 1800); },
+  hover: () => tone(1250, 0.025, 0.03),
+  cardHover: () => { swish(0.07, 0.06, 2400, 4200); tone(880, 0.04, 0.035, "triangle"); },
+  swoosh: () => { swish(0.13, 0.2, 450, 2800); swish(0.2, 0.17, 2800, 500, 0.11); },
+  cardPlay: () => { swish(0.16, 0.2, 3200, 700); tone(392, 0.09, 0.09, "triangle", 0.05); },
+  charm: () => tone(660, 0.13, 0.08, "sine", 0.06, 990),
+  poise: () => { tone(1760, 0.2, 0.05); tone(2350, 0.26, 0.035); },
+  block: () => { tone(1320, 0.28, 0.1, "triangle"); tone(1980, 0.34, 0.06); swish(0.08, 0.1, 3000, 1500); },
+  draw: () => [0, 0.07, 0.14].forEach((d) => swish(0.06, 0.09, 3400, 2000, d)),
+  measure: () => { tone(294, 0.16, 0.13, "triangle"); tone(220, 0.22, 0.1, "triangle", 0.1); },
+  answer: () => arpeggio([659, 988], 0.09, 0.22, 0.11),
+  recover: () => tone(330, 0.28, 0.1, "sine", 0, 494),
+  fluster: () => tone(520, 0.3, 0.09, "sawtooth", 0, 260),
+  falter: () => { tone(180, 0.5, 0.2, "sawtooth", 0, 70); swish(0.3, 0.14, 900, 200); },
+  pass: () => arpeggio([523, 659, 784], 0.1, 0.32, 0.12),
+  swept: () => arpeggio([523, 659, 784, 1047, 1319], 0.09, 0.5, 0.13),
+  fail: () => arpeggio([392, 330, 262], 0.15, 0.38, 0.11),
+  banner: () => swish(0.28, 0.14, 700, 2600),
+  popupClose: () => swish(0.16, 0.1, 2600, 800),
+  toggleOn: () => tone(740, 0.08, 0.09, "triangle", 0, 988),
+  toggleOff: () => tone(740, 0.08, 0.08, "triangle", 0, 494),
+  // Luna's little "mrrp" each time her bubble moves on.
+  coach: () => { tone(620, 0.09, 0.15, "triangle", 0, 1040); tone(1040, 0.14, 0.13, "triangle", 0.08, 720); },
+  rivalStep: () => tone(247, 0.14, 0.09, "triangle"),
+};
+
+export function sfx(name) {
+  if (!ctx) return;
+  sfxPlayed[name] = (sfxPlayed[name] || 0) + 1;
+  if (!muted) SOUNDS[name]();
+}
+
+// Buttons sound on press and on hover wherever they are, so new buttons get sounds automatically.
+let lastHover = null;
+document.addEventListener("pointerdown", () => ensureContext(), true);
+document.addEventListener("click", (event) => {
+  const target = event.target.closest("button, summary");
+  if (target && !target.matches(".card, .tile, :disabled")) sfx("click");
+}, true);
+document.addEventListener("pointerover", (event) => {
+  const target = event.target.closest("button, summary");
+  if (target === lastHover) return;
+  lastHover = target;
+  if (target && !target.matches(".card, :disabled")) sfx("hover");
+});
+
 function note(freq, start, length, volume) {
   const osc = ctx.createOscillator(), gain = ctx.createGain();
   osc.type = "sine";
@@ -237,13 +318,10 @@ function note(freq, start, length, volume) {
 export function playChime(notes = [659.3, 830.6, 987.8]) {
   if (ctx) notes.forEach((f, i) => note(f, ctx.currentTime + i * 0.09, 0.35, 0.09));
 }
-export function playTap() {
-  if (ctx) note(440, ctx.currentTime, 0.1, 0.05);
-}
 function signal() {
   if (!meter) return 0;
   const data = new Float32Array(meter.fftSize);
   meter.getFloatTimeDomainData(data);
   return Math.sqrt(data.reduce((sum, v) => sum + v * v, 0) / data.length);
 }
-export const musicState = () => ({ signal: +signal().toFixed(4), gain: current ? +current.gain.gain.value.toFixed(3) : 0, muted, song: current?.style || "", running: ctx?.state, level, shoePlays, princeHits, clapPlays, shoeReady: shoe.readyState });
+export const musicState = () => ({ signal: +signal().toFixed(4), gain: current ? +current.gain.gain.value.toFixed(3) : 0, muted, song: current?.style || "", running: ctx?.state, level, shoePlays, princeHits, clapPlays, sfxPlayed, shoeReady: shoe.readyState });

@@ -44,7 +44,10 @@
         <p><strong>Answering a stance:</strong> play your 2nd move or better in the matching style.</p>
         <p><strong>Phrases:</strong> play a Step, a Turn, then a Pose. The next card in order is free, and finishing earns a Flourish.</p>
       </div>
-      <button id="introGo" class="end-button">Choose your Dance Card</button>
+      <div class="intro-actions">
+        <button id="introTutorial" class="end-button">Play the tutorial</button>
+        <button id="introGo" class="plain-button">Skip to the Ball</button>
+      </div>
     </div>
   </section>
 
@@ -188,6 +191,17 @@
         <div class="key-title"><span id="keyKind"></span><strong id="keyName"></strong><p id="keyLine"></p></div>
       </div>
       <div id="keyPetals" class="key-petals" aria-hidden="true"></div>
+    </div>
+
+    <div id="coachSpot" class="coach-spot"></div>
+    <div id="coach" class="coach" hidden>
+      <img class="coach-portrait" src="assets/reference/guide.png" alt="Luna, your guide, a small dark cat">
+      <div class="coach-bubble">
+        <strong class="coach-name">Luna</strong>
+        <span id="coachLabel"></span>
+        <p id="coachText"></p>
+        <button id="coachNext" class="end-button">Next</button>
+      </div>
     </div>
 
     <div id="banner" class="banner" hidden></div>

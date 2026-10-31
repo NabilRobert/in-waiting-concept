@@ -27,6 +27,7 @@ export const STANCE_TEXT = {
   Guarded: "Your cards Charm 20% less",
   Proud: "He regains 3 Composure each measure",
   Aloof: "1 fewer step each measure",
+  Calm: "No special rule",
 };
 
 // Each move: name, damage, and what else it does. The style decides its role.
@@ -102,14 +103,15 @@ export function makeDeck(build, run) {
   return deck.map((c) => ({ ...c, beat: c.tag ? TAG_BEAT[c.tag] : BEAT_OF[c.name] }));
 }
 
-export function startBall(build, run, seed) {
+// The tutorial passes its own waltzes, stances and scripted moves. A normal Ball passes nothing.
+export function startBall(build, run, seed, tutorial = null) {
   const rng = makeRng(seed + 2);
   const pool = makeDeck(build, run);
   const priority = (c) => (c.rank > 1 ? 5 : c.closer ? 4 : c.rhythm ? 3 : c.name === "Encore" || c.name === "Quick step" ? 3 : c.rank ? 2 : 1);
-  const active = [...pool].sort((a, b) => priority(b) - priority(a) || b.dmg - a.dmg).slice(0, DECK_LIMIT);
+  const active = tutorial ? tutorial.deck.flatMap((name) => pool.filter((c) => c.name === name)) : [...pool].sort((a, b) => priority(b) - priority(a) || b.dmg - a.dmg).slice(0, DECK_LIMIT);
   const stances = [];
   for (let i = 0; i < ROUNDS; i++) stances.push(...rng.sample(Object.keys(STANCES), WALTZES_PER_ROUND));
-  return { rng, build, run, pool, active, stances, results: [], offset: 0, waltz: -1, fluster: Math.floor(build.suspicion / 10), dead: 0, result: "", swept: 0, closed: 0, hearts: 0, draw: [], discard: [], hand: [] };
+  return { rng, build, run, pool, active, stances: tutorial?.stances || stances, waltzes: tutorial?.waltzes || WALTZES, tutorial, results: [], offset: 0, waltz: -1, fluster: Math.floor(build.suspicion / 10), dead: 0, result: "", swept: 0, closed: 0, hearts: 0, draw: [], discard: [], hand: [] };
 }
 
 function drawCards(s, n) {
@@ -121,7 +123,9 @@ function drawCards(s, n) {
 }
 
 export function pickIntent(s) {
-  const w = WALTZES[s.waltz];
+  const scripted = s.tutorial?.intents[s.waltz]?.[s.measure - 1];
+  if (scripted) return scripted;
+  const w = s.waltzes[s.waltz];
   const roll = s.rng.random();
   if (roll < 0.6) return { type: "lead", value: w.lead + s.rng.randint(0, 3), text: "Takes the lead" };
   if (roll < 0.82) return { type: "recover", value: RECOVER, text: "Collects himself" };
@@ -141,9 +145,9 @@ export const phaseOf = (s) => s.waltz % WALTZES_PER_ROUND;
 
 export function nextWaltz(s) {
   s.waltz += 1;
-  const w = WALTZES[s.waltz];
+  const w = s.waltzes[s.waltz];
   if (phaseOf(s) === 0) {
-    s.offset = s.rng.randint(-3, 3);
+    s.offset = s.tutorial ? 0 : s.rng.randint(-3, 3);
     s.rivalSteps = s.rng.sample(RIVAL_MOVES, 4);
     const weights = [s.rng.randint(3, 6), s.rng.randint(3, 6), s.rng.randint(3, 6), s.rng.randint(3, 6)];
     const total = weights.reduce((a, b) => a + b);
@@ -172,6 +176,17 @@ export function setStance(s, stance) {
   s.stance = stance;
   s.stances[s.waltz] = stance;
   s.answered = false;
+}
+
+// The tutorial asks for specific cards, so it makes sure they're in hand.
+export function ensureInHand(s, name) {
+  if (s.hand.some((c) => c.name === name)) return;
+  for (const pile of [s.draw, s.discard]) {
+    const found = pile.find((c) => c.name === name);
+    if (found) { pile.splice(pile.indexOf(found), 1); s.hand.push(found); return; }
+  }
+  const card = s.pool.find((c) => c.name === name);
+  if (card) s.hand.push({ ...card });
 }
 
 export function toggleCard(s, card) {
@@ -246,8 +261,8 @@ export function play(s, card) {
 
 function finishWaltz(s, events) {
   s.results.push(s.waltzResult);
-  if (s.waltz === WALTZES.length - 1) {
-    s.result = s.hearts >= HEARTS_TO_WIN ? "won" : "lost";
+  if (s.waltz === s.waltzes.length - 1) {
+    s.result = s.tutorial || s.hearts >= HEARTS_TO_WIN ? "won" : "lost";
     if (s.result === "won") events.push({ type: "won" });
   }
   return events;

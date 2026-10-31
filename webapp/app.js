@@ -1,7 +1,8 @@
 import { newRun, STANCES } from "./rules.js";
 import { intentLine, reaction, greeting, momentLine, herLine } from "./lines.js";
-import { startMusic, stopMusic, resetMusic, setQuiet, playStyle, toggleMute, playChime, playTap, playShoe, playPrinceHit, playClap, musicState } from "./audio.js";
-import { startBall as beginBall, nextWaltz as advanceWaltz, setStance, roundOf, phaseOf, rivalPace, ROUNDS, WALTZES_PER_ROUND, MAX_HEARTS, HEARTS_TO_WIN, startWaltz, toggleCard, play, endMeasure, canPlay, cardsAllowed, stepsLeft, isFree, damageOf, intentValue, BEATS, WALTZES, MUSIC_START, FLUSTER_LIMIT, STANCE_TEXT, DECK_LIMIT, RUIN } from "./ball.js";
+import { startMusic, stopMusic, resetMusic, setQuiet, playStyle, toggleMute, playChime, playShoe, playPrinceHit, playClap, sfx, musicState } from "./audio.js";
+import { TUTORIAL_BUILD, TUTORIAL_SETUP, RIVAL_TIP, RIVAL_DONE_TIP, CARD_TIP, startCoach, stopCoach, coachOn, coachHide, coachSay, coachWait, coachWaltz, coachAllows, coachPlayed, coachCheck, coachEnded, coachHighlight, coachLightsUp } from "./tutorial.js";
+import { startBall as beginBall, ensureInHand, nextWaltz as advanceWaltz, setStance, roundOf, phaseOf, rivalPace, ROUNDS, WALTZES_PER_ROUND, MAX_HEARTS, HEARTS_TO_WIN, startWaltz, toggleCard, play, endMeasure, canPlay, cardsAllowed, stepsLeft, isFree, damageOf, intentValue, BEATS, WALTZES, MUSIC_START, FLUSTER_LIMIT, STANCE_TEXT, DECK_LIMIT, RUIN } from "./ball.js";
 
 const $ = (id) => document.getElementById(id);
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -46,6 +47,7 @@ let poseShown = "";
 function setPose(name) {
   const src = poseSrc(name);
   if (src === poseShown) return;
+  if (poseShown) sfx("swoosh");
   poseShown = src;
   $("mistress").setAttribute("href", src);
 }
@@ -54,6 +56,7 @@ function setPose(name) {
 let ball = null, session = 0, busy = false;
 
 function show(id) {
+  document.body.classList.toggle("in-tutorial", id === "ball" && coachOn());
   ["intro", "setup", "ball", "result"].forEach((s) => { $(s).hidden = s !== id; });
   window.scrollTo(0, 0);
 }
@@ -72,6 +75,7 @@ function float(text, colour = "#fff") {
   setTimeout(() => el.remove(), 1100);
 }
 async function banner(title, small, ms = 1500) {
+  sfx("banner");
   const el = $("banner");
   el.innerHTML = `${title}${small ? `<small>${small}</small>` : ""}`;
   el.hidden = false;
@@ -116,7 +120,7 @@ function keyArt({ kind, name, line, image = "dance", sound = playShoe }) {
   const close = $("keyClose");
   close.focus();
   return new Promise((resolve) => {
-    close.onclick = () => { el.hidden = true; close.onclick = null; resolve(); };
+    close.onclick = () => { sfx("popupClose"); el.hidden = true; close.onclick = null; resolve(); };
   });
 }
 
@@ -246,8 +250,8 @@ function renderIntent() {
 
 function renderHeader() {
   const s = ball;
-  $("danceLabel").textContent = `Round ${roundOf(s) + 1} of ${ROUNDS}, waltz ${phaseOf(s) + 1} of ${WALTZES_PER_ROUND}`;
-  $("hearts").textContent = `${s.hearts} / ${MAX_HEARTS} Hearts`;
+  $("danceLabel").textContent = s.tutorial ? `Tutorial, waltz ${phaseOf(s) + 1} of ${WALTZES_PER_ROUND}` : `Round ${roundOf(s) + 1} of ${ROUNDS}, waltz ${phaseOf(s) + 1} of ${WALTZES_PER_ROUND}`;
+  $("hearts").textContent = `${s.hearts} / ${s.waltzes.length * 2} Hearts`;
   $("passMark").style.left = `${(s.pass / s.max) * 100}%`;
 }
 
@@ -267,13 +271,14 @@ function renderProgramme() {
   s.stances.slice(start, start + WALTZES_PER_ROUND).forEach((stance, i) => {
     const li = document.createElement("li"), index = start + i;
     li.className = index < s.waltz ? "done" : index === s.waltz ? "now" : "";
-    li.innerHTML = `<span>${i + 1}. ${stance}</span><span>${label[s.results[index]] || STANCES[stance]}</span>`;
+    li.innerHTML = `<span>${i + 1}. ${stance}</span><span>${label[s.results[index]] || STANCES[stance] || ""}</span>`;
     list.append(li);
   });
 }
 
 // The hand rests low. Whichever card you point at is shown large in the middle.
 function showZoom(el) {
+  sfx("cardHover");
   const zoom = $("cardZoom");
   zoom.innerHTML = "";
   const copy = el.cloneNode(true);
@@ -310,7 +315,7 @@ function render() {
   $("deckLeft").textContent = `(${s.draw.length} left to draw)`;
   $("stancePanel").innerHTML = `<div class="stance-name">${s.stance}</div>
     <p>${STANCE_TEXT[s.stance]}.</p>
-    <p class="${answered ? "answered" : "need"}">${answered ? "Answered" : `Play a ${needed} move 2+ to answer`}</p>`;
+    ${needed ? `<p class="${answered ? "answered" : "need"}">${answered ? "Answered" : `Play a ${needed} move 2+ to answer`}</p>` : ""}`;
   renderProgramme();
   renderIntent();
   renderPace();
@@ -323,7 +328,8 @@ function render() {
     const answers = !answered && card.style === needed && card.rank > 1;
     const free = !card.dead && isFree(s, card);
     el.className = `card${answers ? " answers" : ""}${free ? " free" : ""}${card.dead ? " dead" : ""}`;
-    el.disabled = busy || !canPlay(s, card);
+    el.disabled = busy || !canPlay(s, card) || !coachAllows("play", card);
+    el.dataset.name = card.name;
     el.style.setProperty("--c", cardColour(card));
     el.innerHTML = `${answers ? `<span class="ribbon">Answers</span>` : free ? `<span class="ribbon flow">Free</span>` : ""}
       <span class="name">${card.name}</span>
@@ -341,8 +347,9 @@ function render() {
     el.addEventListener("pointerleave", hideZoom);
     hand.append(el);
   }
-  $("endMeasure").disabled = busy;
+  $("endMeasure").disabled = busy || !coachAllows("end");
   $("endMeasure").textContent = s.music <= s.measure ? "End the waltz" : "End measure";
+  coachHighlight();
 }
 
 async function runEvents(events, id) {
@@ -352,13 +359,15 @@ async function runEvents(events, id) {
       setPose(poseFor(e.card));
       aura(cardColour(e.card));
       if (e.card.name === "Heel stamp") playShoe({ dip: false });
-      else playTap();
+      else sfx("cardPlay");
+      if (e.dmg) sfx("charm");
+      if (e.card.poise) sfx("poise");
       if (e.dmg) float(`Charm ${e.dmg}`);
       else if (e.card.poise) float(`+${e.card.poise} Poise`, "#bfe3ff");
       if (e.card.music) float(`+${e.card.music} Music`, "#ffe2a8");
       if (e.card.steps) float(`+${e.card.steps} Steps`, "#ffe2a8");
       log(`${e.card.name}${e.dmg ? `: Composure -${e.dmg}` : ""}${e.card.poise ? `, Poise +${e.card.poise}` : ""}${e.card.music ? `, Music +${e.card.music}` : ""}${e.card.steps ? `, Steps +${e.card.steps}` : ""}.`);
-      if (e.answers) { float(`${ball.stance} answered!`, "#ffe2a8"); log(`You answered his ${ball.stance} stance.`, "good"); }
+      if (e.answers) { sfx("answer"); float(`${ball.stance} answered!`, "#ffe2a8"); log(`You answered his ${ball.stance} stance.`, "good"); }
       herSay(herLine(cardKey(e.card) in { Flamenco: 1, Waltz: 1, Tango: 1, Minuet: 1 } ? e.card.style : cardKey(e.card)));
       const said = reaction(e.answers ? "answered" : cardKey(e.card));
       say(said.text, e.dmg >= 12 || e.answers ? "surprised" : said.face);
@@ -393,8 +402,9 @@ async function runEvents(events, id) {
       float(e.hit > e.blocked ? `Fluster +${e.hit - e.blocked}` : "Blocked", e.hit > e.blocked ? "#ffb5a6" : "#bfe3ff");
       log(`He took the lead for ${e.hit}. Poise blocked ${e.blocked}.`, e.hit > e.blocked ? "bad" : "good");
       if (e.hit > e.blocked) await keyArt({ kind: "The prince takes the lead", name: `Fluster +${e.hit - e.blocked}`, line: momentLine("attack"), image: "prince", sound: playPrinceHit });
-      else await wait(900);
+      else { sfx("block"); await wait(900); }
     } else if (e.type === "recover") {
+      sfx("recover");
       setPose("idle");
       showComposure(e.composure);
       setFace("stern");
@@ -402,44 +412,52 @@ async function runEvents(events, id) {
       log(`He recovered ${e.value} Composure.`, "bad");
       await wait(800);
     } else if (e.type === "pressure") {
+      sfx("fluster");
       setFace("amused");
       float("A Flustered card joins your deck", "#ffb5a6");
       log("He unsettled her. A Flustered card joined your deck.", "bad");
       await wait(800);
     } else if (e.type === "proud") {
+      sfx("recover");
       showComposure(e.composure);
       float(`Composure +${e.value}`, "#ffb5a6");
       log(`His pride restored ${e.value} Composure.`, "bad");
       await wait(700);
     } else if (e.type === "flustered") {
+      sfx("fluster");
       float("Flustered! A dead card joins your deck", "#ffb5a6");
       log("Fluster is rising. A dead card joined your deck.", "bad");
       await wait(700);
     } else if (e.type === "swept") {
+      sfx("swept");
       setPose("win");
       say(reaction("swept").text, "flustered");
       log("Swept off his feet!", "good");
       await wait(1200);
       await banner("Swept off his feet!", "His Composure hits 0. +2 Hearts.", 1500);
     } else if (e.type === "charmed") {
+      sfx("pass");
       setPose("favour");
       say(reaction("charmed").text, "charmed");
       log("You beat the rival's mark as the music ended.", "good");
       await wait(1000);
       await banner("You beat her mark", `Composure ${ball.composure} against her ${ball.pass}. +1 Heart.`, 1700);
     } else if (e.type === "closed") {
+      sfx("pass");
       setPose("favour");
       say(reaction("closed").text, "charmed");
       log(`You closed the waltz early. Fluster -${e.calmed}.`, "good");
       await wait(1000);
       await banner("A perfect close", `She ends on her terms. +1 Heart. Fluster -${e.calmed}.`, 1700);
     } else if (e.type === "failed") {
+      sfx("fail");
       setPose("lose");
       say(reaction("failed").text, "stern");
       log("You didn't beat the rival's mark.", "bad");
       await wait(1000);
       await banner("No Hearts this waltz", `Composure ${ball.composure}. The mark was ${ball.pass}. The Ball goes on.`, 1700);
     } else if (e.type === "falter") {
+      sfx("falter");
       setPose("strike");
       shake();
       say(reaction("stumbled").text, "amused");
@@ -462,12 +480,14 @@ async function afterEvents(id) {
   if (s.waltzResult) return nextWaltz(id);
   busy = false;
   render();
+  coachCheck(s.composure, s.pass);
 }
 
 async function onPlay(card) {
   if (busy) return;
   busy = true;
   const id = session;
+  coachPlayed(card);
   const events = play(ball, card);
   render();
   await runEvents(events, id);
@@ -480,10 +500,12 @@ async function onEndMeasure() {
   const id = session;
   $("hand").querySelectorAll(".card").forEach((el) => { el.disabled = true; });
   $("endMeasure").disabled = true;
+  coachLightsUp();
+  sfx("measure");
   const events = endMeasure(ball);
   await runEvents(events, id);
   if (id !== session) return;
-  if (!ball.waltzResult && !ball.result) setPose("idle");
+  if (!ball.waltzResult && !ball.result) { setPose("idle"); sfx("draw"); coachEnded(); }
   await afterEvents(id);
 }
 
@@ -522,6 +544,8 @@ async function showRival(id) {
   $("intent").hidden = true;
   setPose("idle");
   log(`Round ${roundOf(s) + 1}: the rival dances with the prince.`);
+  coachSay(RIVAL_TIP);
+  sfx("banner");
   const el = $("banner");
   el.innerHTML = `Round ${roundOf(s) + 1}: the rival takes the floor<small>Watch how far she gets. You must beat it.</small>`;
   el.hidden = false;
@@ -534,6 +558,7 @@ async function showRival(id) {
     const next = rivalPace(s, i + 1);
     setPose(s.rivalSteps[i]);
     showComposure(next);
+    sfx("rivalStep");
     float(`Measure ${i + 1}: Charm ${shown - next}`, "#ffd3da");
     log(`Rival, measure ${i + 1}: Charm ${shown - next}.`);
     shown = next;
@@ -547,6 +572,10 @@ async function showRival(id) {
   $("paceMark").style.opacity = .85;
   log(`She left his Composure at ${s.pass}.`);
   await banner(`She reached ${s.pass} in 4 measures`, "Same steps, same Music. Beat it.", 1500);
+  if (id !== session) return;
+  coachSay(RIVAL_DONE_TIP);
+  await coachWait();
+  if (id !== session) return;
   showOnLeft("mistress");
 }
 
@@ -565,13 +594,18 @@ function renderEditor() {
     el.style.setProperty("--c", cardColour(card));
     const logo = `<img class="tile-logo" src="assets/icons/${cardEmblem(card)}.svg" alt="${card.kind}">`;
     el.innerHTML = `${logo}<strong>${card.name}</strong><span>${card.kind}</span>`;
-    el.addEventListener("click", () => { toggleCard(s, card); renderEditor(); });
+    el.addEventListener("click", () => {
+      sfx(on ? "toggleOff" : "toggleOn");
+      toggleCard(s, card);
+      renderEditor();
+    });
     box.append(el);
   }
   $("editorGo").disabled = s.active.length < 8;
 }
 
 function editDeck() {
+  coachSay(CARD_TIP);
   $("editor").hidden = false;
   renderEditor();
   return new Promise((resolve) => {
@@ -588,6 +622,7 @@ function applyDevMood() {
 
 async function nextWaltz(id) {
   busy = true;
+  coachHide();
   advanceWaltz(ball);
   applyDevMood();
   if (phaseOf(ball) === 0) {
@@ -616,12 +651,23 @@ async function nextWaltz(id) {
   render();
   setFace("calm");
   say(greeting(phaseOf(ball)), "calm");
+  coachWaltz(ball.waltz);
 }
 
 function finish() {
   stopMusic();
   clearTalk();
   const s = ball, won = s.result === "won";
+  sfx(won ? "swept" : "fail");
+  $("again").hidden = Boolean(s.tutorial);
+  $("change").textContent = s.tutorial ? "Choose your Dance Card" : "Try another deck";
+  if (s.tutorial) {
+    stopCoach();
+    $("resultEyebrow").textContent = "Tutorial complete";
+    $("resultTitle").textContent = "You're ready for the Ball";
+    $("resultText").textContent = `You earned ${s.hearts} of ${s.waltzes.length * 2} Hearts. Our lady looked radiant, and the rival looked like a wet kitten. Hmph! A real Ball is three rounds like this one, and your total Hearts decide how far she falls. Now go on, I have a nap to get to. Mreoooww!`;
+    return show("result");
+  }
   const ruin = RUIN.find(([needed]) => s.hearts >= needed);
   $("resultEyebrow").textContent = won ? `${s.hearts} of ${MAX_HEARTS} Hearts` : `Bad ending: ${s.hearts} of ${MAX_HEARTS} Hearts`;
   $("resultTitle").textContent = won ? `The rival is ${ruin[1]}` : "He stays out of reach";
@@ -631,12 +677,24 @@ function finish() {
   show("result");
 }
 
-function startBall(build, seed) {
+function startTutorial() {
+  startCoach({
+    sound: () => sfx("coach"),
+    ensure: (name) => ensureInHand(ball, name),
+    waltz: () => ball.waltz,
+    canPlayNamed: (name) => ball.hand.some((c) => c.name === name && canPlay(ball, c)),
+    refresh: () => render(),
+  });
+  startBall(TUTORIAL_BUILD, 7, TUTORIAL_SETUP);
+}
+
+function startBall(build, seed, tutorial = null) {
   session += 1;
+  if (!tutorial) stopCoach();
   resetMusic();
   startMusic();
   const run = makeRun(build, seed);
-  ball = beginBall(build, run, seed);
+  ball = beginBall(build, run, seed, tutorial);
   ball.seed = seed;
   $("log").innerHTML = "";
   $("weakness").textContent = `The rival's weakness is ${run.weakness}, so those cards hit double. You can edit your Dance Card before each round.`;
@@ -663,6 +721,7 @@ function buildMenu() {
 }
 
 $("introGo").addEventListener("click", () => show("setup"));
+$("introTutorial").addEventListener("click", startTutorial);
 $("endMeasure").addEventListener("click", onEndMeasure);
 $("devMood").addEventListener("change", () => {
   if (!ball || $("ball").hidden || !applyDevMood() || !ball.hand.length) return;
@@ -675,7 +734,7 @@ $("testClap").addEventListener("click", () => playClap());
 $("journalBtn").addEventListener("click", () => { $("journal").hidden = !$("journal").hidden; });
 $("again").addEventListener("click", () => startBall(ball.build, ball.seed));
 $("change").addEventListener("click", () => show("setup"));
-$("quit").addEventListener("click", () => { session += 1; stopMusic(); $("editor").hidden = true; show("setup"); });
+$("quit").addEventListener("click", () => { session += 1; stopMusic(); stopCoach(); $("editor").hidden = true; $("keyArt").hidden = true; show("setup"); });
 $("mute").addEventListener("click", () => { $("mute").textContent = toggleMute() ? "Sound off" : "Sound on"; });
 buildMenu();
 if (new URLSearchParams(location.search).has("silent")) $("mute").textContent = "Silent test";
