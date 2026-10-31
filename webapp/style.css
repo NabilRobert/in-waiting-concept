@@ -541,6 +541,8 @@ h2 { font-size: 28px; margin: 28px 0 12px; }
   .card .beat-tag { position: static; align-self: flex-start; margin-bottom: 2px; }
 }
 
+.who { margin: 0 0 10px; font-family: var(--display); font-size: clamp(19px, 1.6vw, 24px); font-weight: 700; color: var(--gold); }
+
 /* The tutorial coach */
 .intro-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .plain-button { color: var(--cream); background: rgba(255, 255, 255, .08); border: 2px solid rgba(255, 255, 255, .35); border-radius: 12px; padding: 10px 16px; font-weight: 700; }
