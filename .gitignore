@@ -1,0 +1,6 @@
+.DS_Store
+.claude/
+__pycache__/
+webapp/taps.html
+webapp/assets/reference/taps/
+prototype/GAME_PLAN.md

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>In Waiting: The Ball</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700;800&family=Alegreya+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="intro" class="screen">
+    <div class="setup-inner intro-inner">
+      <p class="eyebrow">Before the Ball</p>
+      <h1>Learn the dances</h1>
+      <p class="lede">Each waltz, the prince takes a stance. Bring his Composure below the rival's mark before the Music runs out. Each dance style plays a different role, and each one answers a different stance.</p>
+      <div class="styles">
+        <article class="style-card" style="--accent: var(--flamenco)">
+          <span class="role">Attack</span>
+          <h2><img class="style-logo-big" src="assets/icons/flamenco.svg" alt="">Flamenco</h2>
+          <p>Huge hits that leave her flustered.</p>
+          <p class="answers"><strong>Answers Guarded:</strong> break through when your cards Charm less.</p>
+        </article>
+        <article class="style-card" style="--accent: var(--waltz)">
+          <span class="role">Defence and healing</span>
+          <h2><img class="style-logo-big" src="assets/icons/waltz.svg" alt="">Waltz</h2>
+          <p>Build Poise to block his moves, calm her down, and buy more Music.</p>
+          <p class="answers"><strong>Answers Forward:</strong> hold firm when his moves hit harder.</p>
+        </article>
+        <article class="style-card" style="--accent: var(--tango)">
+          <span class="role">Debuff</span>
+          <h2><img class="style-logo-big" src="assets/icons/tango.svg" alt="">Tango</h2>
+          <p>Unbalance him, so every card after it hits harder.</p>
+          <p class="answers"><strong>Answers Proud:</strong> stop him recovering Composure.</p>
+        </article>
+        <article class="style-card" style="--accent: var(--minuet)">
+          <span class="role">Finisher</span>
+          <h2><img class="style-logo-big" src="assets/icons/minuet.svg" alt="">Minuet</h2>
+          <p>Grows stronger as he weakens, and can cancel his next move.</p>
+          <p class="answers"><strong>Answers Aloof:</strong> win back the step he takes away.</p>
+        </article>
+      </div>
+      <div class="basics">
+        <p><strong>Answering a stance:</strong> play your 2nd move or better in the matching style.</p>
+        <p><strong>Phrases:</strong> play a Step, a Turn, then a Pose. The next card in order is free, and finishing earns a Flourish.</p>
+      </div>
+      <button id="introGo" class="end-button">Choose your Dance Card</button>
+    </div>
+  </section>
+
+  <section id="setup" class="screen" hidden>
+    <div class="setup-inner">
+      <p class="eyebrow">Proof of concept</p>
+      <h1>The Ball</h1>
+      <p class="lede">Three rounds of three waltzes with the prince. Before each round, the rival dances with him, and where she leaves his Composure sets your gold mark. Beat it before the Music runs out to earn Hearts, or reach 0 to sweep him off his feet. Your total Hearts decide how the night ends.</p>
+      <h2>Choose your Dance Card</h2>
+      <div id="builds" class="builds"></div>
+      <p class="fine">These decks stand in for a month of preparation.</p>
+    </div>
+  </section>
+
+  <section id="ball" class="screen" hidden>
+    <div id="stage" class="stage">
+      <svg id="stageSvg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMax slice" role="img" aria-label="The couple dancing">
+        <defs>
+          <radialGradient id="spot">
+            <stop offset="0%" stop-color="#fff3d2" stop-opacity=".9"/>
+            <stop offset="55%" stop-color="#ffe6b4" stop-opacity=".42"/>
+            <stop offset="100%" stop-color="#ffe6b4" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#12050b" stop-opacity=".78"/>
+            <stop offset="55%" stop-color="#12050b" stop-opacity=".42"/>
+            <stop offset="100%" stop-color="#12050b" stop-opacity=".22"/>
+          </linearGradient>
+          <radialGradient id="glow" cx="50%" cy="50%" r="72%">
+            <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+            <stop offset="100%" stop-color="#14060c" stop-opacity=".62"/>
+          </radialGradient>
+        </defs>
+        <g id="arches">
+          <image href="assets/reference/ballroom.jpg" x="-30" y="-124" width="860" height="520" preserveAspectRatio="xMidYMax slice"/>
+        </g>
+        <rect width="800" height="400" fill="url(#shade)"/>
+        <rect width="800" height="400" fill="url(#glow)"/>
+        <g id="couple" transform="translate(400 276) scale(.72) translate(-400 -344)">
+          <ellipse cx="400" cy="230" rx="185" ry="165" fill="url(#spot)"/>
+          <ellipse cx="400" cy="350" rx="150" ry="10" fill="#000" opacity=".3"/>
+          <image id="mistress" class="dancer" x="205" y="64" width="390" height="290" preserveAspectRatio="xMidYMax meet"/>
+        </g>
+      </svg>
+      <div id="floaters"></div>
+    </div>
+
+    <figure class="portrait left">
+      <img id="leftFace" src="assets/reference/mistress.png" alt="Your mistress">
+    </figure>
+    <figure id="princePortrait" class="portrait right">
+      <img id="princeFace" src="assets/reference/prince.png" alt="The prince">
+    </figure>
+    <div id="leftName" class="namecard">Your Mistress</div>
+    <div id="intent" class="intent"></div>
+    <div id="speech" class="speech" hidden></div>
+    <div id="herSpeech" class="speech her-speech" hidden></div>
+
+    <header class="topbar">
+      <div class="top-left"><strong>The Ball</strong><span id="danceLabel"></span></div>
+      <div class="top-mid"><span class="heart">&#9829;</span><span id="hearts">0</span></div>
+      <div class="top-actions">
+        <details class="dev-menu">
+          <summary class="top-button">Dev</summary>
+          <div class="dev-panel">
+            <label class="dev-mood">Mood
+              <select id="devMood">
+                <option value="">Auto</option>
+                <option value="Forward">Forward (Waltz)</option>
+                <option value="Guarded">Guarded (Flamenco)</option>
+                <option value="Proud">Proud (Tango)</option>
+                <option value="Aloof">Aloof (Minuet)</option>
+              </select>
+            </label>
+            <button id="testStomp" class="top-button">Test stomp</button>
+            <button id="testAttack" class="top-button">Test attack</button>
+            <button id="testClap" class="top-button">Test clap</button>
+          </div>
+        </details>
+        <button id="journalBtn" class="top-button">Journal</button>
+        <button id="mute" class="top-button">Sound on</button>
+        <button id="quit" class="top-button">New Ball</button>
+      </div>
+    </header>
+
+    <div class="plate prince-plate">
+      <div class="music-coin">
+        <strong id="musicNum"></strong>
+        <span>Music</span>
+      </div>
+      <div class="plate-name"><strong>The Prince</strong><span id="statusWord"></span></div>
+      <div class="plate-meter">
+        <div class="meter tall"><div id="composureFill"></div><div id="paceMark" title="Where the rival was at this point"></div><div id="passMark" title="The rival's mark"></div></div>
+        <strong id="composureNum"></strong>
+      </div>
+      <div class="stance" id="stancePanel"></div>
+      <small id="musicCost"></small>
+      <div class="meter hidden-meter"><div id="musicFill"></div></div>
+    </div>
+
+    <div id="phrase" class="phrase" aria-label="Your dance phrase">
+      <span class="beat" data-i="0">1 Step</span><i></i>
+      <span class="beat" data-i="1">2 Turn</span><i></i>
+      <span class="beat" data-i="2">3 Pose</span>
+    </div>
+    <div id="hand" class="hand"></div>
+    <div id="cardZoom" class="card-zoom" hidden></div>
+
+    <div id="play" class="controls">
+      <div class="plate mistress-plate">
+        <div class="plate-name"><span class="fluster-label">Fluster <em id="flusterNum"></em></span></div>
+        <div class="plate-meter">
+          <div class="meter tall"><div id="flusterFill"></div></div>
+          <div class="shield"><strong id="poise">0</strong></div>
+        </div>
+      </div>
+      <div class="steps-orb"><strong><span id="steps">0</span><small id="stepsMax"></small></strong><span>Steps</span></div>
+      <button id="endMeasure" class="end-button" disabled>End measure</button>
+      <div class="pile draw-pile" title="Draw pile"><strong id="drawCount">0</strong><span>Draw</span></div>
+      <div class="pile discard-pile" title="Discard pile"><strong id="discardCount">0</strong><span>Used</span></div>
+    </div>
+
+    <aside id="journal" class="journal" hidden>
+      <div class="panel"><h3>This round</h3><ol id="programme" class="programme"></ol></div>
+      <div class="panel"><h3>Dance Card <span id="deckLeft"></span></h3><p class="hint" id="weakness"></p></div>
+      <div class="panel log-panel"><h3>What happened</h3><ul id="log"></ul></div>
+    </aside>
+
+    <div id="editor" class="editor" hidden>
+      <div class="editor-head">
+        <div><h3 id="editorTitle"></h3><p id="editorText" class="hint"></p></div>
+        <button id="editorGo" class="end-button">Dance</button>
+      </div>
+      <div id="editorCards" class="editor-cards"></div>
+    </div>
+
+    <div id="keyArt" class="key-art" hidden>
+      <div class="key-frame">
+        <button id="keyClose" class="key-close" aria-label="Close">&times;</button>
+        <img id="keyImage" src="assets/reference/keyart.jpg" alt="">
+        <div class="key-title"><span id="keyKind"></span><strong id="keyName"></strong><p id="keyLine"></p></div>
+      </div>
+      <div id="keyPetals" class="key-petals" aria-hidden="true"></div>
+    </div>
+
+    <div id="banner" class="banner" hidden></div>
+    <button id="skip" class="pill-button skip" hidden>Skip</button>
+  </section>
+
+  <section id="result" class="screen" hidden>
+    <div class="result-inner">
+      <p class="eyebrow" id="resultEyebrow"></p>
+      <h1 id="resultTitle"></h1>
+      <p class="lede" id="resultText"></p>
+      <div class="result-actions">
+        <button id="again" class="primary">Same Ball again</button>
+        <button id="change" class="ghost">Try another deck</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

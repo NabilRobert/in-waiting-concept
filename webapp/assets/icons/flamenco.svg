@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#d9503f" stroke="#e2b04f" stroke-width="3"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#fff" stroke-opacity=".35"/>
+  <path d="M32 47 L5.1 36.1 L5.9 34.3 L6.9 32.5 L8.0 30.8 L9.1 29.1 L10.4 27.6 L11.9 26.1 L13.4 24.8 L15.0 23.5 L16.6 22.4 L18.4 21.4 L20.2 20.5 L22.1 19.7 L24.0 19.1 L26.0 18.6 L28.0 18.3 L30.0 18.1 L32.0 18.0 L34.0 18.1 L36.0 18.3 L38.0 18.6 L40.0 19.1 L41.9 19.7 L43.8 20.5 L45.6 21.4 L47.4 22.4 L49.0 23.5 L50.6 24.8 L52.1 26.1 L53.6 27.6 L54.9 29.1 L56.0 30.8 L57.1 32.5 L58.1 34.3 L58.9 36.1Z" fill="#fff8ea"/><path d="M32 47L9.5 28.7" stroke="#d9503f" stroke-width="1.6"/><path d="M32 47L15.8 23.0" stroke="#d9503f" stroke-width="1.6"/><path d="M32 47L23.5 19.3" stroke="#d9503f" stroke-width="1.6"/><path d="M32 47L32.0 18.0" stroke="#d9503f" stroke-width="1.6"/><path d="M32 47L40.5 19.3" stroke="#d9503f" stroke-width="1.6"/><path d="M32 47L48.2 23.0" stroke="#d9503f" stroke-width="1.6"/><path d="M32 47L54.5 28.7" stroke="#d9503f" stroke-width="1.6"/><circle cx="32" cy="47" r="3.4" fill="#e2b04f"/>
+</svg>
